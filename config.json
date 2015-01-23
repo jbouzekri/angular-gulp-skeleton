@@ -1,0 +1,40 @@
+{
+    "env": "dev",
+    "bases": {
+        "dist": "dist/"
+    },
+    "path": {
+        "scripts": [
+            "src/**/*.js",
+            "!src/bower_components/**"
+        ],
+        "libs": [
+            "src/bower_components/angular/angular.min.js"
+        ],
+        "css": [
+            "src/bower_components/bootstrap/dist/css/bootstrap.css",
+            "src/css/**/*.css"
+        ],
+        "fonts": [
+            "src/bower_components/bootstrap/dist/fonts/*"
+        ],
+        "img": [
+            "src/img/**/*"
+        ],
+        "html": [
+            "src/**/*.html"
+        ]
+    },
+    "dev": {
+        "serve": {
+            "root": "src/",
+            "port": 8888
+        }
+    },
+    "prod": {
+        "serve": {
+            "root": "dist/",
+            "port": 8888
+        }
+    }
+}
