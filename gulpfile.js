@@ -14,6 +14,7 @@ var minifycss = require('gulp-minify-css');
 var debug = require('gulp-debug');
 var imagemin = require('gulp-imagemin');
 var watch = require('gulp-watch');
+var livereload = require('gulp-livereload');
 var argv = require('yargs').argv;
 
 // Config
@@ -28,6 +29,11 @@ if (typeof argv.env !== "undefined") {
 var isWatch = false;
 if (typeof argv.watch !== "undefined") {
     isWatch = true;
+}
+
+var isLivereload = true;
+if (typeof argv.livereload !== "undefined") {
+    isLivereload = false;
 }
 
 // Clean files
@@ -65,7 +71,11 @@ Copy all file
 Use in dev environment
 */
 gulp.task('copy-all', ['clean', 'jshint'], function() {
-    gulp.src([config.bases.src+'*', config.bases.src+'**/*'], {"base": config.bases.src})
+    gulp.src([config.bases.src+'*.html'])
+    // Manage removing of livereload script
+    .pipe(gulpif(!isLivereload, htmlreplace({livereload: ""}, {keepUnassigned: true})))
+    // Add other src
+    .pipe(addsrc([config.bases.src+'*', config.bases.src+'**/*', '!'+config.bases.src+'*.html'], {"base": config.bases.src}))
     .pipe(gulp.dest(config.bases.dist));
 });
 
@@ -136,10 +146,15 @@ Serve file
 gulp.task('serve', ['build'], function () {
     connect.server(config.serve);
 
+    if (isWatch && isLivereload) {
+        livereload.listen();
+    }
+
     // Call with --watch to enable
     if (isWatch) {
         watch('src/**/*', {verbose: true})
-        .pipe(gulp.dest(config.bases.dist));
+        .pipe(gulp.dest(config.bases.dist))
+        .pipe(gulpif(isLivereload, livereload()));
     }
 });
 
