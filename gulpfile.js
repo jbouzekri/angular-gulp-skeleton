@@ -13,23 +13,38 @@ var addsrc = require('gulp-add-src');
 var minifycss = require('gulp-minify-css');
 var debug = require('gulp-debug');
 var imagemin = require('gulp-imagemin');
+var watch = require('gulp-watch');
 var argv = require('yargs').argv;
 
 // Config
 var config = require('./config.json');
 
+// Read command line params
 var env = config.env;
 if (typeof argv.env !== "undefined") {
     env = argv.env;
 }
 
+var isWatch = false;
+if (typeof argv.watch !== "undefined") {
+    isWatch = true;
+}
+
 // Clean files
+gulp.task('clean', function() {
+    return gulp.src(config.bases.dist, {read: false})
+    .pipe(clean());
+});
+gulp.task('clean-bower', function() {
+    return gulp.src(config.bases.dist+'bower_components/', {read: false})
+    .pipe(clean());
+});
 gulp.task('clean-js', function() {
-    return gulp.src(config.bases.dist+'**/*.js', {read: false})
+    return gulp.src(config.bases.dist+'scripts/*', {read: false})
     .pipe(clean());
 });
 gulp.task('clean-css', function() {
-    return gulp.src(config.bases.dist+'**/*.css', {read: false})
+    return gulp.src(config.bases.dist+'css/*', {read: false})
     .pipe(clean());
 });
 gulp.task('clean-fonts', function() {
@@ -44,20 +59,34 @@ gulp.task('clean-img', function() {
     return gulp.src(config.bases.dist+'img/*', {read: false})
     .pipe(clean());
 });
-gulp.task('clean', ['clean-html', 'clean-fonts', 'clean-css', 'clean-js', 'clean-img']);
+
+/*
+Copy all file
+Use in dev environment
+*/
+gulp.task('copy-all', ['clean', 'jshint'], function() {
+    gulp.src([config.bases.src+'*', config.bases.src+'**/*'], {"base": config.bases.src})
+    .pipe(gulp.dest(config.bases.dist));
+});
+
+/*
+jshint task
+*/
+gulp.task('jshint', function () {
+    gulp.src(config.path.scripts)
+    .pipe(jshint())
+    .pipe(jshint.reporter('default'));
+});
 
 /*
 Process scripts and concatenate them into one output file
 */
-gulp.task('js', ['clean-js'], function () {
-  gulp.src(config.path.scripts)
-  .pipe(jshint())
-  .pipe(jshint.reporter('default'))
-  // if prod, uglify and concat with lib scripts and put in dist folder
-  .pipe(gulpif(env == "prod", uglify()))
-  .pipe(gulpif(env == "prod", addsrc.prepend(config.path.libs)))
-  .pipe(gulpif(env == "prod", concat('app.js')))
-  .pipe(gulpif(env == "prod", gulp.dest(config.bases.dist + 'scripts/')));
+gulp.task('js', ['clean-js', 'jshint'], function () {
+    gulp.src(config.path.scripts)
+    .pipe(uglify())
+    .pipe(addsrc.prepend(config.path.libs))
+    .pipe(concat('app.js'))
+    .pipe(gulp.dest(config.bases.dist + 'scripts/'));
 });
 
 /*
@@ -66,12 +95,12 @@ if prod minify html and put it in dist folder
 */
 gulp.task('html', ['clean-html'], function () {
     gulp.src(config.path.html)
-    .pipe(gulpif(env == "prod", htmlreplace({
+    .pipe(htmlreplace({
         css: 'css/stylesheets.css',
         js: 'scripts/app.js'
-    })))
-    .pipe(gulpif(env == "prod", htmlminify()))
-    .pipe(gulpif(env == "prod", gulp.dest(config.bases.dist)));
+    }))
+    .pipe(htmlminify())
+    .pipe(gulp.dest(config.bases.dist));
 });
 
 /*
@@ -79,9 +108,9 @@ Process css
 */
 gulp.task('css', ['clean-css'], function() {
     gulp.src(config.path.css)
-    .pipe(gulpif(env == "prod", minifycss({comments:true, spare:true})))
-    .pipe(gulpif(env == "prod", concat('stylesheets.css')))
-    .pipe(gulpif(env == "prod", gulp.dest(config.bases.dist + 'css/')));
+    .pipe(minifycss({comments:true, spare:true}))
+    .pipe(concat('stylesheets.css'))
+    .pipe(gulp.dest(config.bases.dist + 'css/'));
 });
 
 /*
@@ -89,7 +118,7 @@ Process fonts
 */
 gulp.task('fonts', ['clean-fonts'], function() {
     gulp.src(config.path.fonts)
-    .pipe(gulpif(env == "prod", gulp.dest(config.bases.dist + 'fonts/')));
+    .pipe(gulp.dest(config.bases.dist + 'fonts/'));
 });
 
 /*
@@ -103,13 +132,25 @@ gulp.task('img', ['clean-img'], function() {
 
 /*
 Serve file
-serve from dist if gulp serve --env=prod
-else serve directly from src
 */
-gulp.task('serve', function () {
-  connect.server(
-      gulpif(env == "dev", config.dev.serve, config.prod.serve)
-  );
+gulp.task('serve', ['build'], function () {
+    connect.server(config.serve);
+
+    // Call with --watch to enable
+    if (isWatch) {
+        watch('src/**/*', {verbose: true})
+        .pipe(gulp.dest(config.bases.dist));
+    }
 });
 
-gulp.task('build', ['js', 'html', 'css', 'fonts', 'img']);
+/*
+Build task
+Different for dev or prod env
+*/
+var buildDep = ['copy-all'];
+if (env === "prod") {
+    buildDep = ['js', 'html', 'css', 'fonts', 'img', 'clean-bower'];
+}
+gulp.task('build', buildDep);
+
+gulp.task('default', ['build']);

@@ -1,7 +1,8 @@
 {
     "env": "dev",
     "bases": {
-        "dist": "dist/"
+        "dist": "dist/",
+        "src": "src/"
     },
     "path": {
         "scripts": [
@@ -13,10 +14,12 @@
         ],
         "css": [
             "src/bower_components/bootstrap/dist/css/bootstrap.css",
+            "src/bower_components/font-awesome/css/font-awesome.css",
             "src/css/**/*.css"
         ],
         "fonts": [
-            "src/bower_components/bootstrap/dist/fonts/*"
+            "src/bower_components/bootstrap/dist/fonts/*",
+            "src/bower_components/font-awesome/fonts/*"
         ],
         "img": [
             "src/img/**/*"
@@ -25,16 +28,8 @@
             "src/**/*.html"
         ]
     },
-    "dev": {
-        "serve": {
-            "root": "src/",
-            "port": 8888
-        }
-    },
-    "prod": {
-        "serve": {
-            "root": "dist/",
-            "port": 8888
-        }
+    "serve": {
+        "root": "dist/",
+        "port": 8888
     }
 }

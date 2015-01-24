@@ -1,23 +1,31 @@
 <!DOCTYPE html>
-<html ng-app="todooff">
+<html ng-app="appSkeleton">
     <head>
-        <meta charset="utf-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <title>Toodooff</title>
-        <meta name="description" content="">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta charset="utf-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <title>Angular Gulp Skeleton</title>
+        <meta name="description" content="" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+        <link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
+
         <!-- build:css -->
-        <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.css">
-        <link rel="stylesheet" href="css/stylesheets.css">
+        <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.css" />
+        <link rel="stylesheet" href="bower_components/font-awesome/css/font-awesome.css" />
+        <link rel="stylesheet" href="css/stylesheets.css" />
         <!-- endbuild -->
     </head>
     <body>
-        <img src="img/logo.svg" />
-        <h1>Jobou angular and gulp skeleton</h1>
+        <div ng-controller="MainController">
+            <img src="img/logo.svg" />
+            <h1>{{ username }} angular and gulp skeleton test2</h1>
+            <i class="fa fa-camera-retro"></i>
+        </div>
 
         <!-- build:js -->
-        <script type="text/javascript" src="bower_components/angular/angular.js" />
-        <script type="text/javascript" src="app.js" />
+        <script type="text/javascript" src="bower_components/angular/angular.js"></script>
+        <script type="text/javascript" src="app.js"></script>
+        <script type="text/javascript" src="scripts/controllers/main.ctrl.js"></script>
         <!-- endbuild -->
     </body>
 </html>

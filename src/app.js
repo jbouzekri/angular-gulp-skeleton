@@ -1,5 +1,5 @@
-(function () {
+(function (angular) {
     'use strict';
 
-    console.log('ok');
-}());
+    angular.module('appSkeleton', []);
+}(angular));
