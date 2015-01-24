@@ -16,6 +16,7 @@ var imagemin = require('gulp-imagemin');
 var watch = require('gulp-watch');
 var livereload = require('gulp-livereload');
 var argv = require('yargs').argv;
+var karma = require('karma').server;
 
 // Config
 var config = require('./config.json');
@@ -138,6 +139,25 @@ gulp.task('img', ['clean-img'], function() {
     gulp.src(config.path.img)
     .pipe(imagemin())
     .pipe(gulp.dest(config.bases.dist + 'img/'));
+});
+
+/**
+* Run test once and exit
+*/
+gulp.task('test', function (done) {
+    karma.start({
+        configFile: __dirname + '/karma.conf.js',
+        singleRun: true
+    }, done);
+});
+
+/**
+* Watch for file changes and re-run tests on each change
+*/
+gulp.task('tdd', function (done) {
+    karma.start({
+        configFile: __dirname + '/karma.conf.js'
+    }, done);
 });
 
 /*
