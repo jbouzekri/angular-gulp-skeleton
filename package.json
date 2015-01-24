@@ -1,23 +1,22 @@
 {
-  "name": "todooff-website",
+  "name": "angular-gulp-skeleton",
   "version": "0.0.1",
-  "description": "Web frontend for todooff todo application",
+  "description": "Angular and gulp skeleton with dev and prod environment management",
   "repository": {
     "type": "git",
-    "url": "https://github.com/todooff/website"
+    "url": "https://github.com/jbouzekri/angular-gulp-skeleton"
   },
-  "keywords": [
-    "todo",
-    "pouchdb",
-    "offline",
-    "angular"
-  ],
   "author": "Jonathan Bouzekri",
   "license": "MIT",
+  "keywords": [
+    "angular",
+    "gulp",
+    "skeleton"
+  ],
   "bugs": {
-    "url": "https://github.com/todooff/website/issues"
+    "url": "https://github.com/jbouzekri/angular-gulp-skeleton/issues"
   },
-  "homepage": "https://github.com/todooff/website",
+  "homepage": "https://github.com/jbouzekri/angular-gulp-skeleton",
   "devDependencies": {
     "bower": "^1.3.1",
     "gulp": "^3.8.10",
