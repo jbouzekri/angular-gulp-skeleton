@@ -37,6 +37,11 @@ if (typeof argv.livereload !== "undefined") {
     isLivereload = false;
 }
 
+var tdd = false;
+if (typeof argv.tdd !== "undefined") {
+    tdd = true;
+}
+
 // Clean files
 gulp.task('clean', function() {
     return gulp.src(config.bases.dist, {read: false})
@@ -146,24 +151,15 @@ gulp.task('img', ['clean-img'], function() {
 */
 gulp.task('test', function (done) {
     karma.start({
-        configFile: __dirname + '/karma.conf.js',
+        configFile: __dirname + '/test/karma.conf.js',
         singleRun: true
-    }, done);
-});
-
-/**
-* Watch for file changes and re-run tests on each change
-*/
-gulp.task('tdd', function (done) {
-    karma.start({
-        configFile: __dirname + '/karma.conf.js'
     }, done);
 });
 
 /*
 Serve file
 */
-gulp.task('serve', ['build'], function () {
+gulp.task('serve', ['build'], function (done) {
     connect.server(config.serve);
 
     if (isWatch && isLivereload) {
@@ -175,6 +171,14 @@ gulp.task('serve', ['build'], function () {
         watch('src/**/*', {verbose: true})
         .pipe(gulp.dest(config.bases.dist))
         .pipe(gulpif(isLivereload, livereload()));
+    }
+
+    // Watch for file changes and re-run tests on each change
+    // Call with --watch --tdd to enable
+    if (isWatch && tdd) {
+        karma.start({
+            configFile: __dirname + '/test/karma.conf.js'
+        }, done);
     }
 });
 

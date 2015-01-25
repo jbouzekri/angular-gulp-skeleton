@@ -16,16 +16,15 @@
         <!-- endbuild -->
     </head>
     <body>
-        <div ng-controller="MainController">
-            <img src="img/logo.svg" />
-            <h1>{{ username }} angular and gulp skeleton</h1>
-            <i class="fa fa-camera-retro"></i>
+        <div ui-view>
         </div>
 
         <!-- build:js -->
         <script type="text/javascript" src="bower_components/angular/angular.js"></script>
+        <script type="text/javascript" src="bower_components/angular-ui-router/release/angular-ui-router.js"></script>
         <script type="text/javascript" src="app.js"></script>
-        <script type="text/javascript" src="scripts/controllers/main.ctrl.js"></script>
+        <script type="text/javascript" src="scripts/controllers/home.ctrl.js"></script>
+        <script type="text/javascript" src="scripts/controllers/page.ctrl.js"></script>
         <!-- endbuild -->
 
         <!-- build:livereload -->

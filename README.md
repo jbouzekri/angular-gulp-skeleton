@@ -46,3 +46,4 @@ Running
 * `gulp serve --watch` : Build (without processing) then serve them while watching for change (default : localhost:8888). Livereload enabled.
 * `gulp serve --watch --no-livereload` : Same as before but without the livereload
 * `gulp serve --env=prod` : Build and process files then serve them (default : localhost:8888)
+* `gulp serve --watch --tdd`

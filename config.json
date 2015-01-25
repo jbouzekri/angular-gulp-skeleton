@@ -10,7 +10,8 @@
             "!src/bower_components/**"
         ],
         "libs": [
-            "src/bower_components/angular/angular.min.js"
+            "src/bower_components/angular/angular.min.js",
+            "src/bower_components/angular-ui-router/release/angular-ui-router.js"
         ],
         "css": [
             "src/bower_components/bootstrap/dist/css/bootstrap.css",
