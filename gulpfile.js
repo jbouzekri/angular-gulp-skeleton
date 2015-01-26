@@ -15,6 +15,7 @@ var debug = require('gulp-debug');
 var imagemin = require('gulp-imagemin');
 var watch = require('gulp-watch');
 var livereload = require('gulp-livereload');
+var ngAnnotate = require('gulp-ng-annotate');
 var argv = require('yargs').argv;
 var karma = require('karma').server;
 
@@ -60,7 +61,7 @@ gulp.task('clean-css', function() {
     .pipe(clean());
 });
 gulp.task('clean-fonts', function() {
-    return gulp.src(config.bases.dist+'**/fonts/*', {read: false})
+    return gulp.src(config.bases.dist+'fonts/*', {read: false})
     .pipe(clean());
 });
 gulp.task('clean-html', function() {
@@ -86,6 +87,14 @@ gulp.task('copy-all', ['clean', 'jshint'], function() {
 });
 
 /*
+Copy single files to dist folder
+*/
+gulp.task('single-files', function() {
+    gulp.src(config.path.singlefiles, {base: config.bases.src})
+    .pipe(gulp.dest(config.bases.dist));
+});
+
+/*
 jshint task
 */
 gulp.task('jshint', function () {
@@ -99,8 +108,9 @@ Process scripts and concatenate them into one output file
 */
 gulp.task('js', ['clean-js', 'jshint'], function () {
     gulp.src(config.path.scripts)
-    .pipe(uglify())
+    .pipe(ngAnnotate())
     .pipe(addsrc.prepend(config.path.libs))
+    .pipe(uglify())
     .pipe(concat('app.js'))
     .pipe(gulp.dest(config.bases.dist + 'scripts/'));
 });
@@ -188,7 +198,7 @@ Different for dev or prod env
 */
 var buildDep = ['copy-all'];
 if (env === "prod") {
-    buildDep = ['js', 'html', 'css', 'fonts', 'img', 'clean-bower'];
+    buildDep = ['js', 'html', 'css', 'fonts', 'img', 'single-files', 'clean-bower'];
 }
 gulp.task('build', buildDep);
 

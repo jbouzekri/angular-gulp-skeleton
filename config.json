@@ -27,6 +27,9 @@
         ],
         "html": [
             "src/**/*.html"
+        ],
+        "singlefiles": [
+            "src/favicon.ico"
         ]
     },
     "serve": {

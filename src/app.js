@@ -21,7 +21,7 @@
                 url: "/page/{pageName}",
                 controller: 'PageController',
                 templateUrl: 'views/page.html'
-            })
+            });
         }
     ]);
 }(angular));
