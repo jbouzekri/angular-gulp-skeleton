@@ -18,6 +18,8 @@ var livereload = require('gulp-livereload');
 var ngAnnotate = require('gulp-ng-annotate');
 var argv = require('yargs').argv;
 var karma = require('karma').server;
+var webdriver_update = require('gulp-protractor').webdriver_update;
+var protractor = require('gulp-protractor').protractor;
 
 // Config
 var config = require('./config.json');
@@ -159,11 +161,33 @@ gulp.task('img', ['clean-img'], function() {
 /**
 * Run test once and exit
 */
-gulp.task('test', function (done) {
+gulp.task('test:unit', function (done) {
     karma.start({
         configFile: __dirname + '/test/karma.conf.js',
         singleRun: true
     }, done);
+});
+
+/*
+Download the selenium webdriver
+*/
+gulp.task('webdriver_update', webdriver_update);
+
+/*
+* Run e2e tests
+*/
+gulp.task('test:e2e', ['build'], function(cb) {
+    connect.server(config.serve);
+
+    gulp.src(['test/e2e/**/*.spec.js'], { read:false })
+    .pipe(protractor({
+        configFile: 'test/protractor.conf.js',
+    })).on('error', function(e) {
+        console.log(e);
+        connect.serverClose();
+    }).on('end', function() {
+        connect.serverClose();
+    });
 });
 
 /*
