@@ -20,6 +20,8 @@ var argv = require('yargs').argv;
 var karma = require('karma').server;
 var webdriver_update = require('gulp-protractor').webdriver_update;
 var protractor = require('gulp-protractor').protractor;
+var sass = require('gulp-sass');
+var batch = require('gulp-batch');
 
 // Config
 var config = require('./config.json');
@@ -50,48 +52,32 @@ gulp.task('clean', function() {
     return gulp.src(config.bases.dist, {read: false})
     .pipe(clean());
 });
-gulp.task('clean-bower', function() {
-    return gulp.src(config.bases.dist+'bower_components/', {read: false})
-    .pipe(clean());
-});
-gulp.task('clean-js', function() {
-    return gulp.src(config.bases.dist+'scripts/*', {read: false})
-    .pipe(clean());
-});
-gulp.task('clean-css', function() {
-    return gulp.src(config.bases.dist+'css/*', {read: false})
-    .pipe(clean());
-});
-gulp.task('clean-fonts', function() {
-    return gulp.src(config.bases.dist+'fonts/*', {read: false})
-    .pipe(clean());
-});
-gulp.task('clean-html', function() {
-    return gulp.src(config.bases.dist+'**/*.html', {read: false})
-    .pipe(clean());
-});
-gulp.task('clean-img', function() {
-    return gulp.src(config.bases.dist+'img/*', {read: false})
-    .pipe(clean());
-});
 
 /*
 Copy all file
 Use in dev environment
 */
 gulp.task('copy-all', ['clean', 'jshint'], function() {
+    var otherSrc = [config.bases.src+'*', config.bases.src+'**/*', '!'+config.bases.src+'*.html'];
+    if (config.use_sass) {
+        otherSrc.push('!src/**/*.css');
+    }
+
     gulp.src([config.bases.src+'*.html'])
     // Manage removing of livereload script
-    .pipe(gulpif(!isLivereload, htmlreplace({livereload: ""}, {keepUnassigned: true})))
+    .pipe(gulpif(!isLivereload || !isWatch, htmlreplace({livereload: ""}, {keepUnassigned: true, keepBlockTags: true})))
+    // Switch between sass or css according to configuration
+    .pipe(gulpif(config.use_sass, htmlreplace({css: ""}, {keepUnassigned: true})))
+    .pipe(gulpif(!config.use_sass, htmlreplace({sass: ""}, {keepUnassigned: true})))
     // Add other src
-    .pipe(addsrc([config.bases.src+'*', config.bases.src+'**/*', '!'+config.bases.src+'*.html'], {"base": config.bases.src}))
+    .pipe(addsrc(otherSrc, {"base": config.bases.src}))
     .pipe(gulp.dest(config.bases.dist));
 });
 
 /*
 Copy single files to dist folder
 */
-gulp.task('single-files', function() {
+gulp.task('single-files', ['clean'], function() {
     gulp.src(config.path.singlefiles, {base: config.bases.src})
     .pipe(gulp.dest(config.bases.dist));
 });
@@ -108,7 +94,7 @@ gulp.task('jshint', function () {
 /*
 Process scripts and concatenate them into one output file
 */
-gulp.task('js', ['clean-js', 'jshint'], function () {
+gulp.task('js', ['clean', 'jshint'], function () {
     gulp.src(config.path.scripts)
     .pipe(ngAnnotate())
     .pipe(addsrc.prepend(config.path.libs))
@@ -121,11 +107,12 @@ gulp.task('js', ['clean-js', 'jshint'], function () {
 Process html
 if prod minify html and put it in dist folder
 */
-gulp.task('html', ['clean-html'], function () {
+gulp.task('html', ['clean'], function () {
     gulp.src(config.path.html)
     .pipe(htmlreplace({
         css: 'css/stylesheets.css',
-        js: 'scripts/app.js'
+        js: 'scripts/app.js',
+        sass: ''
     }))
     .pipe(htmlminify())
     .pipe(gulp.dest(config.bases.dist));
@@ -134,7 +121,7 @@ gulp.task('html', ['clean-html'], function () {
 /*
 Process css
 */
-gulp.task('css', ['clean-css'], function() {
+gulp.task('css', ['clean'], function() {
     gulp.src(config.path.css)
     .pipe(minifycss({comments:true, spare:true}))
     .pipe(concat('stylesheets.css'))
@@ -142,9 +129,21 @@ gulp.task('css', ['clean-css'], function() {
 });
 
 /*
+Process sass
+*/
+gulp.task('sass', ['clean'], function () {
+    gulp.src(config.path.sass.src)
+    .pipe(sass(config.path.sass.conf))
+    // If prod env, minify and concat
+    .pipe(gulpif(env == "prod", minifycss({comments:true, spare:true})))
+    .pipe(gulpif(env == "prod", concat('stylesheets.css')))
+    .pipe(gulp.dest(config.bases.dist + 'css/'));
+});
+
+/*
 Process fonts
 */
-gulp.task('fonts', ['clean-fonts'], function() {
+gulp.task('fonts', ['clean'], function() {
     gulp.src(config.path.fonts)
     .pipe(gulp.dest(config.bases.dist + 'fonts/'));
 });
@@ -152,7 +151,7 @@ gulp.task('fonts', ['clean-fonts'], function() {
 /*
 Process images
 */
-gulp.task('img', ['clean-img'], function() {
+gulp.task('img', ['clean'], function() {
     gulp.src(config.path.img)
     .pipe(imagemin())
     .pipe(gulp.dest(config.bases.dist + 'img/'));
@@ -202,9 +201,16 @@ gulp.task('serve', ['build'], function (done) {
 
     // Call with --watch to enable
     if (isWatch) {
-        watch('src/**/*', {verbose: true})
+        watch(['src/**/*', '!src/**/*.scss'], {verbose: true})
         .pipe(gulp.dest(config.bases.dist))
         .pipe(gulpif(isLivereload, livereload()));
+
+        if (config.use_sass) {
+            watch(config.path.sass.src, {verbose: true})
+            .pipe(sass(config.path.sass.conf))
+            .pipe(gulp.dest(config.bases.dist + 'css/'))
+            .pipe(gulpif(isLivereload, livereload()));
+        }
     }
 
     // Watch for file changes and re-run tests on each change
@@ -220,10 +226,17 @@ gulp.task('serve', ['build'], function (done) {
 Build task
 Different for dev or prod env
 */
-var buildDep = ['copy-all'];
+var buildDep = ['copy-all', 'fonts'];
 if (env === "prod") {
-    buildDep = ['js', 'html', 'css', 'fonts', 'img', 'single-files', 'clean-bower'];
+    buildDep = ['js', 'html', 'fonts', 'img', 'single-files'];
+    if (!config.use_sass) {
+        buildDep.push('css');
+    }
 }
+if (config.use_sass) {
+    buildDep.push('sass');
+}
+
 gulp.task('build', buildDep);
 
 gulp.task('default', ['build']);

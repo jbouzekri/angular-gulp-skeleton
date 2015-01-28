@@ -1,0 +1,17 @@
+@import 'bootstrap';
+@import 'font-awesome';
+
+.container > div[ui-view] {
+    padding-top: 50px;
+}
+
+$color: light-grey;
+$titleColor: red;
+
+h1 {
+    color: $titleColor;
+}
+
+body {
+    background-color : $color;
+}
