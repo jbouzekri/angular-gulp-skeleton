@@ -1,6 +1,8 @@
 var gulp = require('gulp')
 
-// plugins
+/*
+Tasks dependencies
+*/
 var concat = require('gulp-concat')
 var connect = require('gulp-connect');
 var jshint = require('gulp-jshint');
@@ -23,31 +25,40 @@ var protractor = require('gulp-protractor').protractor;
 var sass = require('gulp-sass');
 var batch = require('gulp-batch');
 
-// Config
+/*
+Config
+Load custom tasks configuration
+*/
 var config = require('./config.json');
 
-// Read command line params
+/*
+Read command line parameters
+*/
+// --env parameter. Default to the one in config.json
 var env = config.env;
 if (typeof argv.env !== "undefined") {
     env = argv.env;
 }
-
+// --watch parameter (used in serve task in dev env).
 var isWatch = false;
 if (typeof argv.watch !== "undefined") {
     isWatch = true;
 }
-
+// --no-livereload parameter (used in serve task in dev env) to disable live reload
 var isLivereload = true;
 if (typeof argv.livereload !== "undefined") {
     isLivereload = false;
 }
-
+// --tdd parameter (used with --watch parameter) to enable running unit test on each changes
 var tdd = false;
 if (typeof argv.tdd !== "undefined") {
     tdd = true;
 }
 
-// Clean files
+/*
+Clean files
+Remove the dist/ folder
+*/
 gulp.task('clean', function() {
     return gulp.src(config.bases.dist, {read: false})
     .pipe(clean());
@@ -55,9 +66,16 @@ gulp.task('clean', function() {
 
 /*
 Copy all file
-Use in dev environment
+Use in dev environment to build the project
+It moves files from src/ to dist/ with almost no files transformation
 */
 gulp.task('copy-all', ['clean', 'jshint'], function() {
+    /*
+    Starts by processing main index.html file
+    It removes livereload js if functionality has been disabled and sass stylesheets if using css without processor
+    */
+
+    // prepare list of files to pipe after processing index.html file
     var otherSrc = [config.bases.src+'*', config.bases.src+'**/*', '!'+config.bases.src+'*.html'];
     if (config.use_sass) {
         otherSrc.push('!src/**/*.css');
@@ -71,11 +89,13 @@ gulp.task('copy-all', ['clean', 'jshint'], function() {
     .pipe(gulpif(!config.use_sass, htmlreplace({sass: ""}, {keepUnassigned: true})))
     // Add other src
     .pipe(addsrc(otherSrc, {"base": config.bases.src}))
+    // Copy to dist folder
     .pipe(gulp.dest(config.bases.dist));
 });
 
 /*
 Copy single files to dist folder
+For example favicon.ico
 */
 gulp.task('single-files', ['clean'], function() {
     gulp.src(config.path.singlefiles, {base: config.bases.src})
@@ -84,6 +104,7 @@ gulp.task('single-files', ['clean'], function() {
 
 /*
 jshint task
+Apply jshint to all src js files
 */
 gulp.task('jshint', function () {
     gulp.src(config.path.scripts)
@@ -92,56 +113,74 @@ gulp.task('jshint', function () {
 });
 
 /*
-Process scripts and concatenate them into one output file
+Process scripts, ng annotate, uglify and concatenate them into one output file
+Use in production environment
 */
 gulp.task('js', ['clean', 'jshint'], function () {
     gulp.src(config.path.scripts)
+    // ng annotate project js files
     .pipe(ngAnnotate())
+    // Pipe libraries js files
     .pipe(addsrc.prepend(config.path.libs))
+    // uglify and concat in one single file
     .pipe(uglify())
     .pipe(concat('app.js'))
+    // Put in dist/scripts folder
     .pipe(gulp.dest(config.bases.dist + 'scripts/'));
 });
 
 /*
-Process html
-if prod minify html and put it in dist folder
+Process html, replace stylesheets and javascript blocks with minified version and minify html
+Use in production environment
 */
 gulp.task('html', ['clean'], function () {
     gulp.src(config.path.html)
+    // Replace stylesheets and javascript blocks with minified version
     .pipe(htmlreplace({
         css: 'css/stylesheets.css',
         js: 'scripts/app.js',
         sass: ''
     }))
+    // Minify html
     .pipe(htmlminify())
+    // Put in dist/ folder
     .pipe(gulp.dest(config.bases.dist));
 });
 
 /*
-Process css
+Process css, minify it and concat them in a single file
+Use in production environment
 */
 gulp.task('css', ['clean'], function() {
     gulp.src(config.path.css)
+    // minify css
     .pipe(minifycss({comments:true, spare:true}))
+    // Concat them
     .pipe(concat('stylesheets.css'))
+    // Put in dist/css/ folder
     .pipe(gulp.dest(config.bases.dist + 'css/'));
 });
 
 /*
 Process sass
+- transforms to css
+- if prod environement, minifiy and concat them
+- Put in dist/css/ folder
 */
 gulp.task('sass', ['clean'], function () {
     gulp.src(config.path.sass.src)
+    // transforms to css
     .pipe(sass(config.path.sass.conf))
     // If prod env, minify and concat
     .pipe(gulpif(env == "prod", minifycss({comments:true, spare:true})))
     .pipe(gulpif(env == "prod", concat('stylesheets.css')))
+    // Put in dist/css/ folder
     .pipe(gulp.dest(config.bases.dist + 'css/'));
 });
 
 /*
 Process fonts
+Copy fonts from project and libraries in dist/fonts/ folder
 */
 gulp.task('fonts', ['clean'], function() {
     gulp.src(config.path.fonts)
@@ -150,15 +189,19 @@ gulp.task('fonts', ['clean'], function() {
 
 /*
 Process images
+Minify them and copy to dist/img/ folder
+Use in production environment
 */
 gulp.task('img', ['clean'], function() {
     gulp.src(config.path.img)
+    // Minify images
     .pipe(imagemin())
+    // Put in dist/img/ folder
     .pipe(gulp.dest(config.bases.dist + 'img/'));
 });
 
-/**
-* Run test once and exit
+/*
+Run unit tests once and exit
 */
 gulp.task('test:unit', function (done) {
     karma.start({
@@ -169,11 +212,14 @@ gulp.task('test:unit', function (done) {
 
 /*
 Download the selenium webdriver
+Use by npm install to download automatically the selenium web driver
 */
 gulp.task('webdriver_update', webdriver_update);
 
 /*
-* Run e2e tests
+Run e2e tests
+The site should be available on localhost:8888 before running this command.
+Moreover check the configuration of protractor.conf.js file (mainly the selenium driver)
 */
 gulp.task('test:e2e', ['build'], function(cb) {
     connect.server(config.serve);
@@ -195,20 +241,29 @@ Serve file
 gulp.task('serve', ['build'], function (done) {
     connect.server(config.serve);
 
+    // If call with --watch without --no-livereload
     if (isWatch && isLivereload) {
         livereload.listen();
     }
 
     // Call with --watch to enable
     if (isWatch) {
+        // Watch changes in all files except scss files
         watch(['src/**/*', '!src/**/*.scss'], {verbose: true})
+        // Copy them in dist/ folder
         .pipe(gulp.dest(config.bases.dist))
+        // Then launch live reload if enabled
         .pipe(gulpif(isLivereload, livereload()));
 
+        // If sass has been enabled. Custom watch to launch preprocessing
         if (config.use_sass) {
+            // Watch changes in scss files
             watch(config.path.sass.src, {verbose: true})
+            // Process them with node-sass
             .pipe(sass(config.path.sass.conf))
+            // Copy them to dist/css/ folder
             .pipe(gulp.dest(config.bases.dist + 'css/'))
+            // Then launch live reload if enabled
             .pipe(gulpif(isLivereload, livereload()));
         }
     }
@@ -228,7 +283,7 @@ Different for dev or prod env
 */
 var buildDep = ['copy-all', 'fonts'];
 if (env === "prod") {
-    buildDep = ['js', 'html', 'fonts', 'img', 'single-files'];
+    buildDep = ['js', 'html', 'fonts', 'img'];
     if (!config.use_sass) {
         buildDep.push('css');
     }
