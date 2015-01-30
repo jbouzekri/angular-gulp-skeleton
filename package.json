@@ -1,6 +1,6 @@
 {
   "name": "angular-gulp-skeleton",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Angular and gulp skeleton with dev and prod environment management",
   "repository": {
     "type": "git",
