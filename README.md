@@ -70,6 +70,8 @@ Some parameters of the gulp script can be configured with the `config.json` file
 
 _Note : Check the value of the seleniumJar in test/protractor.conf.js and verify that the version is the same that was downloaded._
 
+You can use `npm run-script protactor-webdriver` to download the selenium server jar.
+
 ### Configuration
 
 Configuration is located in :
